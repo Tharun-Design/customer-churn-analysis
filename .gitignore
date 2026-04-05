@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Data (keep raw data local, don't push to GitHub)
+data/raw/*.csv
+data/raw/*.xlsx
+data/raw/*.json
+
+# Cleaned data is fine to push (small size)
+# data/cleaned/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Streamlit
+.streamlit/secrets.toml
+
+# MLflow
+mlruns/
+
+# Data files — do not push to GitHub
+data/raw/
+data/cleaned/
+data/churn.db
+*.db
+*.csv
