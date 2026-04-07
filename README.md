@@ -2,13 +2,13 @@
 
 > **Identifying high-risk customers and actionable retention strategies using data analysis and machine learning**
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Live%20Demo-red?logo=streamlit)](https://your-streamlit-link-here)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 
 ---
 
-## 🔍 Problem Statement
+## Problem Statement
 
 A telecom company is losing ~26% of its customers every quarter. The business needs to understand **who is churning, why they're churning, and what can be done to retain them** — before losing more revenue.
 
@@ -19,7 +19,7 @@ This project answers three core business questions:
 
 ---
 
-## 📊 Dataset
+## Dataset
 
 | Property | Details |
 |---|---|
@@ -30,11 +30,11 @@ This project answers three core business questions:
 
 ---
 
-## 🛠️ Tools & Tech Stack
+## Tools & Tech Stack
 
 | Category | Tools |
 |---|---|
-| Language | Python 3.11 |
+| Language | Python 3.13 |
 | Data Wrangling | Pandas, NumPy |
 | SQL Layer | SQLite, SQLAlchemy |
 | Visualization | Matplotlib, Seaborn, Plotly |
@@ -43,7 +43,7 @@ This project answers three core business questions:
 
 ---
 
-## 💡 Key Findings
+## Key Findings
 
 > *(To be updated as analysis progresses)*
 
@@ -54,14 +54,14 @@ This project answers three core business questions:
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
-👉 **[View the Dashboard](https://your-streamlit-link-here)**  
+**[View the Dashboard](https://your-streamlit-link-here)**  
 *(Deployed on Streamlit Cloud — no setup required)*
 
 ---
 
-## 📐 Project Architecture
+## Project Architecture
 
 ```
 customer-churn-analysis/
@@ -95,7 +95,7 @@ customer-churn-analysis/
 
 ---
 
-## ▶️ How to Run Locally
+## How to Run Locally
 
 ```bash
 # 1. Clone the repo
@@ -117,7 +117,7 @@ streamlit run app/streamlit_app.py
 
 ---
 
-## 📈 Business Impact
+## Business Impact
 
 This analysis enables the retention team to:
 - **Target** the top 20% highest-risk customers with personalized offers
@@ -126,7 +126,7 @@ This analysis enables the retention team to:
 
 ---
 
-## 🔭 Next Steps (Phase 2 — ML Model)
+## Next Steps (Phase 2 — ML Model)
 
 - [ ] Build a churn prediction model (XGBoost)
 - [ ] Add SHAP explainability to identify per-customer risk factors
@@ -134,7 +134,7 @@ This analysis enables the retention team to:
 
 ---
 
-## 👤 Author
+## Author
 
-**Your Name**  
-[LinkedIn](https://linkedin.com/in/yourprofile) · [GitHub](https://github.com/your-username) · [Portfolio](https://your-portfolio.com)
+**Tharun Kumar Srinivasan**  
+[LinkedIn](https://www.linkedin.com/in/tharunkumarsrini/) · [GitHub](https://github.com/Tharun-Design) ·
