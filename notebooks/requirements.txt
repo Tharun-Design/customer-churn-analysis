@@ -1,0 +1,31 @@
+# Core Data
+pandas==2.2.0
+numpy>=1.24.0
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.2
+plotly==5.19.0
+
+# Database / SQL
+sqlalchemy==2.0.27
+# NOTE: sqlite3 is built into Python — no install needed!
+
+# Machine Learning (for Phase 2)
+scikit-learn==1.4.0
+xgboost==2.0.3
+
+# Dashboard
+streamlit==1.32.0
+
+# Notebook
+jupyter==1.0.0
+ipykernel==6.29.2
+
+# Utilities
+python-dotenv==1.0.1
+
+# ML Models (Week 5)
+xgboost==2.0.3
+lightgbm==4.3.0
+shap==0.44.1
