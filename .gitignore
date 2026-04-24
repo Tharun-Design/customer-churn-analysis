@@ -23,7 +23,7 @@ data/raw/*.xlsx
 data/raw/*.json
 
 # Cleaned data is fine to push (small size)
-# data/cleaned/
+# # data/cleaned/
 
 # OS
 .DS_Store
@@ -42,7 +42,11 @@ mlruns/
 
 # Data files — do not push to GitHub
 data/raw/
-data/cleaned/
+# data/cleaned/
 data/churn.db
 *.db
 *.csv
+# Data files
+data/raw/*.csv
+# DO NOT ignore cleaned data — needed for Streamlit Cloud
+# # data/cleaned/
