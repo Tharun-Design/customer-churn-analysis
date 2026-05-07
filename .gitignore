@@ -50,3 +50,6 @@ data/churn.db
 data/raw/*.csv
 # DO NOT ignore cleaned data — needed for Streamlit Cloud
 # # data/cleaned/
+# Streamlit (no longer used)
+app/streamlit_app.py
+.streamlit/

@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Churn Analysis — Tharun Kumar Srinivasan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dark:    #0a2518;
+    --forest:  #0d3b2e;
+    --primary: #1a7f5a;
+    --accent:  #4eca7f;
+    --lime:    #a8f5c0;
+    --danger:  #e05555;
+    --amber:   #e8a030;
+    --bg:      #f5f7f5;
+    --surface: #ffffff;
+    --border:  #d8e8de;
+    --text:    #0d1f1a;
+    --muted:   #5a7168;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(10, 37, 24, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(78, 202, 127, 0.15);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-brand {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.01em;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: rgba(255,255,255,0.65);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--dark) 0%, var(--forest) 50%, #1a4a35 100%);
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    padding: 6rem 2rem 4rem;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: 0; right: 0;
+    height: 80px;
+    background: var(--bg);
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+
+  /* Grid background */
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(78,202,127,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(78,202,127,0.04) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  /* Glow orb */
+  .hero-orb {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(78,202,127,0.12) 0%, transparent 70%);
+    right: -100px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(78,202,127,0.12);
+    border: 1px solid rgba(78,202,127,0.25);
+    color: var(--accent);
+    padding: 0.35rem 0.9rem;
+    border-radius: 2rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    color: #ffffff;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-desc {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.55);
+    max-width: 560px;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.6rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--dark);
+  }
+  .btn-primary:hover {
+    background: var(--lime);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(78,202,127,0.3);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  /* Hero stats */
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 3rem;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+
+  .stat {
+    background: rgba(255,255,255,0.03);
+    padding: 1.4rem 1.5rem;
+    text-align: center;
+    transition: background 0.2s;
+  }
+  .stat:hover { background: rgba(78,202,127,0.06); }
+
+  .stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Section base ── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 5rem 2rem;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 0.6rem;
+  }
+
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    color: var(--text);
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .section-desc {
+    font-size: 1rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 3rem;
+  }
+
+  /* ── Pipeline ── */
+  .pipeline {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .pipeline-header {
+    background: var(--forest);
+    padding: 1.2rem 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pipeline-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+
+  .pipeline-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+  }
+
+  .pipeline-step {
+    padding: 1.8rem 1.5rem;
+    border-right: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .pipeline-step:last-child { border-right: none; }
+  .pipeline-step:hover { background: #f0f7f3; }
+
+  .step-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--primary);
+    font-weight: 500;
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.05em;
+  }
+
+  .step-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .step-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .step-tag {
+    display: inline-block;
+    margin-top: 0.8rem;
+    padding: 0.2rem 0.6rem;
+    background: rgba(26,127,90,0.1);
+    color: var(--primary);
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ── Results grid ── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-top: 3px solid var(--border);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(13,59,46,0.08);
+  }
+  .result-card.red   { border-top-color: var(--danger); }
+  .result-card.amber { border-top-color: var(--amber); }
+  .result-card.green { border-top-color: var(--primary); }
+  .result-card.teal  { border-top-color: #2e86ab; }
+  .result-card.lime  { border-top-color: var(--accent); }
+  .result-card.dark  { border-top-color: var(--forest); }
+
+  .result-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .result-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 0.4rem;
+  }
+
+  .result-sub {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* ── Model table ── */
+  .model-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--surface);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+
+  .model-table th {
+    background: var(--forest);
+    color: rgba(255,255,255,0.7);
+    padding: 0.9rem 1.2rem;
+    text-align: left;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .model-table td {
+    padding: 0.9rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .model-table tr:last-child td { border-bottom: none; }
+  .model-table tr:hover td { background: #f0f7f3; }
+
+  .model-table tr.winner td { background: rgba(78,202,127,0.06); }
+  .model-table tr.winner td:first-child {
+    border-left: 3px solid var(--accent);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .badge-green { background: rgba(78,202,127,0.15); color: var(--primary); }
+  .badge-best  { background: var(--accent); color: var(--dark); }
+
+  /* ── Tech stack ── */
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .tech-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem;
+    transition: border-color 0.2s;
+  }
+  .tech-card:hover { border-color: var(--accent); }
+
+  .tech-category {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 0.8rem;
+  }
+
+  .tech-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tech-pill {
+    background: rgba(13,59,46,0.07);
+    color: var(--forest);
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── API section ── */
+  .api-section {
+    background: var(--forest);
+    color: white;
+  }
+
+  .api-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .api-endpoints {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .endpoint {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 0.9rem 1.1rem;
+    transition: background 0.2s;
+  }
+  .endpoint:hover { background: rgba(78,202,127,0.08); }
+
+  .method {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    min-width: 40px;
+    text-align: center;
+  }
+  .method-get  { background: rgba(46,134,171,0.3); color: #7ec8e3; }
+  .method-post { background: rgba(78,202,127,0.2); color: var(--accent); }
+
+  .endpoint-path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .endpoint-desc {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.4);
+    margin-left: auto;
+  }
+
+  .code-block {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 1.4rem;
+    overflow-x: auto;
+  }
+
+  .code-block pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.8);
+    white-space: pre;
+  }
+
+  .code-key   { color: #7ec8e3; }
+  .code-str   { color: #a8f5c0; }
+  .code-num   { color: #ffb347; }
+  .code-bool  { color: var(--accent); }
+
+  /* ── Findings ── */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .finding-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    transition: transform 0.2s;
+  }
+  .finding-card:hover { transform: translateX(4px); }
+
+  .finding-rate {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.8rem;
+    color: var(--danger);
+    line-height: 1;
+    min-width: 70px;
+  }
+
+  .finding-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+
+  .finding-rec {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--dark);
+    color: rgba(255,255,255,0.4);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  footer .footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Section alternating bg ── */
+  .bg-white { background: var(--surface); }
+  .bg-tinted { background: #f0f7f3; }
+
+  /* ── Divider ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .hero-stats { grid-template-columns: repeat(2, 1fr); }
+    .pipeline-steps { grid-template-columns: 1fr 1fr; }
+    .results-grid { grid-template-columns: 1fr 1fr; }
+    .tech-grid { grid-template-columns: 1fr 1fr; }
+    .api-grid { grid-template-columns: 1fr; }
+    .findings-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="nav-brand">Tharun Kumar Srinivasan</a>
+  <ul class="nav-links">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#models">Models</a></li>
+    <li><a href="#api">API</a></li>
+    <li><a href="#stack">Stack</a></li>
+    <li><a href="https://github.com/Tharun-Design/customer-churn-analysis" target="_blank">GitHub</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-orb"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Data Science &middot; End-to-End Project</div>
+    <h1>Customer Churn<br><em>Analysis</em> &<br>Prediction</h1>
+    <p class="hero-desc">
+      An end-to-end data science project analysing telecom customer churn —
+      from SQL business queries to a deployed XGBoost model served via FastAPI.
+    </p>
+    <div class="hero-actions">
+      <a href="https://tharun-design-customer-churn.streamlit.app" target="_blank" class="btn btn-primary">
+        View Live Dashboard
+      </a>
+      <a href="https://github.com/Tharun-Design/customer-churn-analysis" target="_blank" class="btn btn-outline">
+        View on GitHub
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value">26.5%</div>
+        <div class="stat-label">Churn Rate</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">$139k</div>
+        <div class="stat-label">Monthly Revenue at Risk</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">84.5%</div>
+        <div class="stat-label">Model ROC-AUC</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">84.8%</div>
+        <div class="stat-label">Model Recall</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section id="overview" class="bg-white">
+  <div class="container">
+    <div class="section-label">Project Pipeline</div>
+    <h2 class="section-title">8-Week End-to-End Workflow</h2>
+    <p class="section-desc">From raw data to a production prediction system, every layer is documented and reproducible.</p>
+
+    <div class="pipeline">
+      <div class="pipeline-header">
+        <div class="pipeline-dot" style="background:#e05555"></div>
+        <div class="pipeline-dot" style="background:#e8a030; margin-left:6px"></div>
+        <div class="pipeline-dot" style="background:#4eca7f; margin-left:6px"></div>
+      </div>
+      <div class="pipeline-steps">
+        <div class="pipeline-step">
+          <div class="step-number">WEEK 01 — 02</div>
+          <div class="step-title">Data & SQL</div>
+          <div class="step-desc">Data cleaning pipeline, 10-section EDA, and 10 SQL business queries against SQLite.</div>
+          <div class="step-tag">Pandas · SQLite · Seaborn</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">WEEK 03 — 04</div>
+          <div class="step-title">Dashboard</div>
+          <div class="step-desc">Interactive Streamlit dashboard with filters, KPI cards, and insight banners. Deployed on Streamlit Cloud.</div>
+          <div class="step-tag">Streamlit · Plotly</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">WEEK 05 — 06</div>
+          <div class="step-title">ML Modelling</div>
+          <div class="step-desc">5-model comparison, hyperparameter tuning via RandomizedSearchCV, SHAP explainability.</div>
+          <div class="step-tag">XGBoost · SHAP · Sklearn</div>
+        </div>
+        <div class="pipeline-step">
+          <div class="step-number">WEEK 07 — 08</div>
+          <div class="step-title">API & Predictor</div>
+          <div class="step-desc">FastAPI REST API with Swagger docs. Live prediction UI integrated into Streamlit dashboard.</div>
+          <div class="step-tag">FastAPI · Uvicorn · Pydantic</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Results -->
+<section id="results" class="bg-tinted">
+  <div class="container">
+    <div class="section-label">Business Intelligence</div>
+    <h2 class="section-title">Key Results</h2>
+    <p class="section-desc">Findings from exploratory analysis and SQL queries across 7,043 telecom customers.</p>
+
+    <div class="results-grid">
+      <div class="result-card red">
+        <div class="result-label">Overall Churn Rate</div>
+        <div class="result-value">26.5%</div>
+        <div class="result-sub">1,869 of 7,043 customers churned</div>
+      </div>
+      <div class="result-card amber">
+        <div class="result-label">Revenue at Risk</div>
+        <div class="result-value">$139,131</div>
+        <div class="result-sub">Monthly revenue from churned customers</div>
+      </div>
+      <div class="result-card red">
+        <div class="result-label">Month-to-Month Churn</div>
+        <div class="result-value">42.7%</div>
+        <div class="result-sub">3x higher than annual plan customers</div>
+      </div>
+      <div class="result-card red">
+        <div class="result-label">New Customer Churn</div>
+        <div class="result-value">47.4%</div>
+        <div class="result-sub">Customers in first 12 months</div>
+      </div>
+      <div class="result-card amber">
+        <div class="result-label">Electronic Check Churn</div>
+        <div class="result-value">45.3%</div>
+        <div class="result-sub">vs 15% for auto-pay customers</div>
+      </div>
+      <div class="result-card green">
+        <div class="result-label">Avg Charge — Churned</div>
+        <div class="result-value">$74.44</div>
+        <div class="result-sub">$13.17 higher than retained customers</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Models -->
+<section id="models" class="bg-white">
+  <div class="container">
+    <div class="section-label">Machine Learning</div>
+    <h2 class="section-title">5-Model Comparison</h2>
+    <p class="section-desc">Models tuned with RandomizedSearchCV and evaluated on ROC-AUC — the primary metric for ranking churn risk.</p>
+
+    <table class="model-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Accuracy</th>
+          <th>Precision</th>
+          <th>Recall</th>
+          <th>F1 Score</th>
+          <th>ROC-AUC</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="winner">
+          <td><strong>XGBoost (Tuned)</strong></td>
+          <td>75.87%</td>
+          <td>46.96%</td>
+          <td>84.76%</td>
+          <td>60.44%</td>
+          <td><strong>84.47%</strong></td>
+          <td><span class="badge badge-best">Production</span></td>
+        </tr>
+        <tr>
+          <td>Random Forest (Tuned)</td>
+          <td>77.00%</td>
+          <td>55.30%</td>
+          <td>69.79%</td>
+          <td>61.70%</td>
+          <td>84.12%</td>
+          <td><span class="badge badge-green">Runner-up</span></td>
+        </tr>
+        <tr>
+          <td>Logistic Regression</td>
+          <td>73.81%</td>
+          <td>50.42%</td>
+          <td>79.68%</td>
+          <td>61.76%</td>
+          <td>83.99%</td>
+          <td><span class="badge badge-green">Baseline</span></td>
+        </tr>
+        <tr>
+          <td>LightGBM (Tuned)</td>
+          <td>75.94%</td>
+          <td>53.41%</td>
+          <td>73.26%</td>
+          <td>61.78%</td>
+          <td>83.54%</td>
+          <td><span class="badge badge-green">Compared</span></td>
+        </tr>
+        <tr>
+          <td>SVM</td>
+          <td>74.24%</td>
+          <td>50.98%</td>
+          <td>76.20%</td>
+          <td>61.09%</td>
+          <td>81.66%</td>
+          <td><span class="badge badge-green">Compared</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 1.5rem; padding: 1.2rem 1.5rem; background: #f0f7f3; border-left: 3px solid var(--primary); border-radius: 0 8px 8px 0; font-size: 0.88rem; color: var(--muted);">
+      <strong style="color: var(--text);">Selection Rationale —</strong>
+      ROC-AUC was chosen as the primary metric because the retention team contacts a fixed number of customers per month.
+      The model's ability to rank customers by churn risk determines campaign ROI directly.
+      XGBoost (Tuned) achieved the highest ROC-AUC of 84.47% with a recall of 84.76%,
+      meaning it correctly identifies 85 out of every 100 churners before they leave.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- API -->
+<section id="api" class="api-section">
+  <div class="container">
+    <div class="section-label" style="color: var(--accent);">REST API</div>
+    <h2 class="section-title" style="color: white;">FastAPI Prediction Service</h2>
+    <p class="section-desc" style="color: rgba(255,255,255,0.45);">
+      XGBoost model wrapped as a production REST API with Swagger documentation,
+      input validation via Pydantic, and batch prediction support.
+    </p>
+
+    <div class="api-grid">
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 1rem;">Endpoints</div>
+        <div class="api-endpoints">
+          <div class="endpoint">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/</span>
+            <span class="endpoint-desc">Health check</span>
+          </div>
+          <div class="endpoint">
+            <span class="method method-get">GET</span>
+            <span class="endpoint-path">/model-info</span>
+            <span class="endpoint-desc">Model metadata</span>
+          </div>
+          <div class="endpoint">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/predict</span>
+            <span class="endpoint-desc">Single prediction</span>
+          </div>
+          <div class="endpoint">
+            <span class="method method-post">POST</span>
+            <span class="endpoint-path">/predict-batch</span>
+            <span class="endpoint-desc">Up to 100 customers</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 1rem;">Sample Response</div>
+        <div class="code-block">
+          <pre>{
+  <span class="code-key">"churn_prediction"</span>: <span class="code-bool">true</span>,
+  <span class="code-key">"churn_probability"</span>: <span class="code-num">0.8968</span>,
+  <span class="code-key">"churn_probability_pct"</span>: <span class="code-str">"89.7%"</span>,
+  <span class="code-key">"risk_level"</span>: <span class="code-str">"High"</span>,
+  <span class="code-key">"recommendation"</span>: <span class="code-str">"Immediate
+  retention action required."</span>,
+  <span class="code-key">"model_used"</span>: <span class="code-str">"XGBoost (Tuned)"</span>
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Findings -->
+<section class="bg-tinted">
+  <div class="container">
+    <div class="section-label">Business Recommendations</div>
+    <h2 class="section-title">High-Risk Segments</h2>
+    <p class="section-desc">Key findings from SQL analysis mapped to actionable retention strategies.</p>
+
+    <div class="findings-grid">
+      <div class="finding-card">
+        <div class="finding-rate">42.7%</div>
+        <div>
+          <div class="finding-title">Month-to-Month Contracts</div>
+          <div class="finding-rec">Offer first-month discounts or loyalty credits to move customers to annual plans. Churn drops to 11% on one-year contracts.</div>
+        </div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-rate">47.4%</div>
+        <div>
+          <div class="finding-title">First 12 Months (New Customers)</div>
+          <div class="finding-rec">Implement a structured onboarding programme with proactive check-ins at months 1, 3, and 6 to reduce early churn.</div>
+        </div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-rate">41.0%</div>
+        <div>
+          <div class="finding-title">Fiber Optic Without Tech Support</div>
+          <div class="finding-rec">Proactively upsell Tech Support to Fiber Optic customers. Churn drops from 41% to 18% with Tech Support — the highest ROI retention action.</div>
+        </div>
+      </div>
+      <div class="finding-card">
+        <div class="finding-rate">45.3%</div>
+        <div>
+          <div class="finding-title">Electronic Check Payment</div>
+          <div class="finding-rec">Offer a 5% bill discount to switch to automatic payment. Electronic check users churn at 3x the rate of credit card auto-pay customers.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- Stack -->
+<section id="stack" class="bg-white">
+  <div class="container">
+    <div class="section-label">Technology</div>
+    <h2 class="section-title">Tech Stack</h2>
+    <p class="section-desc">Every layer of the project uses industry-standard tools used in production data science environments.</p>
+
+    <div class="tech-grid">
+      <div class="tech-card">
+        <div class="tech-category">Data & Analysis</div>
+        <div class="tech-pills">
+          <span class="tech-pill">Python 3.11</span>
+          <span class="tech-pill">Pandas</span>
+          <span class="tech-pill">NumPy</span>
+          <span class="tech-pill">SQLite</span>
+          <span class="tech-pill">SQLAlchemy</span>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-category">Visualisation</div>
+        <div class="tech-pills">
+          <span class="tech-pill">Plotly</span>
+          <span class="tech-pill">Seaborn</span>
+          <span class="tech-pill">Matplotlib</span>
+          <span class="tech-pill">Streamlit</span>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-category">Machine Learning</div>
+        <div class="tech-pills">
+          <span class="tech-pill">XGBoost</span>
+          <span class="tech-pill">LightGBM</span>
+          <span class="tech-pill">Scikit-learn</span>
+          <span class="tech-pill">SHAP</span>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-category">API & Deployment</div>
+        <div class="tech-pills">
+          <span class="tech-pill">FastAPI</span>
+          <span class="tech-pill">Uvicorn</span>
+          <span class="tech-pill">Pydantic</span>
+          <span class="tech-pill">Streamlit Cloud</span>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-category">Tuning & Validation</div>
+        <div class="tech-pills">
+          <span class="tech-pill">RandomizedSearchCV</span>
+          <span class="tech-pill">StratifiedKFold</span>
+          <span class="tech-pill">Learning Curves</span>
+        </div>
+      </div>
+      <div class="tech-card">
+        <div class="tech-category">Version Control</div>
+        <div class="tech-pills">
+          <span class="tech-pill">Git</span>
+          <span class="tech-pill">GitHub</span>
+          <span class="tech-pill">GitHub Pages</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-links">
+    <a href="https://github.com/Tharun-Design/customer-churn-analysis" target="_blank">GitHub Repository</a>
+    <a href="https://tharun-design-customer-churn.streamlit.app" target="_blank">Live Dashboard</a>
+    <a href="https://linkedin.com/in/tharun-kumar-srinivasan" target="_blank">LinkedIn</a>
+  </div>
+  <div>Built by Tharun Kumar Srinivasan &mdash; Data Science Portfolio Project</div>
+  <div style="margin-top: 0.4rem; font-size: 0.75rem;">
+    Python &middot; Streamlit &middot; FastAPI &middot; XGBoost &middot; SHAP
+  </div>
+</footer>
+
+</body>
+</html>

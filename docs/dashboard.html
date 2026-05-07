@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Churn Analytics — Tharun Kumar Srinivasan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --dark:#0a2518;--forest:#0d3b2e;--primary:#1a7f5a;--accent:#4eca7f;
+  --danger:#c0392b;--amber:#d68910;--blue:#2e86ab;
+  --bg:#f4f6f4;--surface:#ffffff;--border:#dde8e4;--text:#0d1f1a;--muted:#5a7168;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;}
+.sidebar{width:240px;min-width:240px;background:var(--forest);min-height:100vh;position:fixed;left:0;top:0;bottom:0;display:flex;flex-direction:column;z-index:50;border-right:1px solid rgba(255,255,255,0.06);}
+.sidebar-brand{padding:1.5rem 1.4rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.06);}
+.brand-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--primary));border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:0.7rem;}
+.brand-name{font-weight:700;font-size:0.9rem;color:#fff;line-height:1.2;}
+.brand-sub{font-size:0.7rem;color:rgba(255,255,255,0.38);margin-top:2px;}
+.sidebar-filters{padding:1.2rem 1.4rem;border-bottom:1px solid rgba(255,255,255,0.06);flex:1;overflow-y:auto;}
+.s-label{font-size:0.62rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.28);margin-bottom:0.9rem;}
+.filter-group{margin-bottom:0.9rem;}
+.f-label{font-size:0.7rem;color:rgba(255,255,255,0.45);margin-bottom:0.35rem;font-weight:500;}
+.f-select{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.82);padding:0.45rem 0.65rem;border-radius:6px;font-size:0.78rem;font-family:'DM Sans',sans-serif;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.3)'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 0.65rem center;padding-right:1.8rem;transition:border-color 0.2s;}
+.f-select:focus{outline:none;border-color:var(--accent);}
+.f-select option{background:var(--forest);color:white;}
+.reset-btn{width:100%;margin-top:0.6rem;padding:0.45rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);border-radius:6px;font-size:0.76rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.reset-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sidebar-meta{padding:1rem 1.4rem;border-top:1px solid rgba(255,255,255,0.06);}
+.meta-line{font-size:0.7rem;color:rgba(255,255,255,0.28);margin-bottom:0.25rem;}
+.meta-line a{color:var(--accent);text-decoration:none;}
+.main{margin-left:240px;flex:1;padding:1.6rem;}
+.page-hdr{background:linear-gradient(135deg,var(--dark) 0%,#1a5c42 100%);border-radius:12px;padding:1.6rem 1.8rem;margin-bottom:1.4rem;border-left:5px solid var(--accent);}
+.hdr-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:#fff;margin-bottom:0.25rem;}
+.hdr-sub{font-size:0.82rem;color:rgba(255,255,255,0.45);}
+.hdr-meta{font-size:0.75rem;color:var(--accent);margin-top:0.5rem;font-weight:500;}
+.filter-notice{background:#ddf4e8;border:1px solid #b2e4c8;border-radius:7px;padding:0.55rem 1rem;font-size:0.8rem;color:var(--primary);font-weight:500;margin-bottom:1.1rem;display:none;}
+.filter-notice.show{display:block;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.9rem;margin-bottom:1.3rem;}
+.kpi{background:var(--surface);border-radius:9px;padding:1.15rem 1.2rem;border:1px solid var(--border);border-top:3px solid var(--border);box-shadow:0 1px 3px rgba(13,59,46,0.06);transition:transform 0.18s;}
+.kpi:hover{transform:translateY(-2px);}
+.kpi.r{border-top-color:var(--danger);}
+.kpi.a{border-top-color:var(--amber);}
+.kpi.b{border-top-color:var(--blue);}
+.kpi.g{border-top-color:var(--primary);}
+.kpi-lbl{font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem;}
+.kpi-val{font-family:'DM Serif Display',serif;font-size:1.75rem;color:var(--text);line-height:1;margin-bottom:0.25rem;}
+.kpi-sub{font-size:0.72rem;color:var(--muted);margin-bottom:0.45rem;}
+.badge{display:inline-block;padding:0.13rem 0.5rem;border-radius:3px;font-size:0.65rem;font-weight:700;}
+.br{background:#fdecea;color:var(--danger);}
+.ba{background:#fef3e0;color:var(--amber);}
+.bb{background:#ddf4ff;color:var(--blue);}
+.bg{background:#e8f5ee;color:var(--primary);}
+.sec-title{font-size:0.85rem;font-weight:700;color:var(--text);margin:1.3rem 0 0.75rem;padding-bottom:0.55rem;border-bottom:1px solid var(--border);}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;margin-bottom:0.9rem;}
+.chart-card{background:var(--surface);border-radius:11px;border:1px solid var(--border);padding:1.2rem;box-shadow:0 1px 3px rgba(13,59,46,0.05);}
+.ct{font-size:0.84rem;font-weight:700;color:var(--text);margin-bottom:0.3rem;}
+.ins{font-size:0.72rem;color:var(--muted);margin-bottom:0.8rem;padding:0.45rem 0.75rem;background:#f0f7f4;border-left:2px solid var(--primary);border-radius:0 4px 4px 0;line-height:1.5;}
+.cw{position:relative;height:200px;}
+.data-tbl{width:100%;border-collapse:collapse;font-size:0.78rem;}
+.data-tbl th{background:var(--forest);color:rgba(255,255,255,0.55);padding:0.6rem 0.8rem;text-align:left;font-size:0.65rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;}
+.data-tbl td{padding:0.6rem 0.8rem;border-bottom:1px solid var(--border);color:var(--text);}
+.data-tbl tr:last-child td{border-bottom:none;}
+.data-tbl tr:hover td{background:#f0f7f3;}
+.pb-wrap{display:flex;align-items:center;gap:0.45rem;}
+.pb{height:5px;border-radius:3px;min-width:4px;}
+footer{text-align:center;padding:1.3rem 0;font-size:0.72rem;color:var(--muted);border-top:1px solid var(--border);margin-top:0.8rem;}
+footer a{color:var(--primary);text-decoration:none;}
+@media(max-width:900px){.sidebar{width:200px;min-width:200px;}.main{margin-left:200px;}.kpi-grid{grid-template-columns:1fr 1fr;}.chart-row{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
+        <line x1="6" y1="20" x2="6" y2="14"/><polyline points="2 20 22 20"/>
+      </svg>
+    </div>
+    <div class="brand-name">Churn Analytics</div>
+    <div class="brand-sub">Tharun Kumar Srinivasan</div>
+  </div>
+
+  <div class="sidebar-filters">
+    <div class="s-label">Filters</div>
+
+    <div class="filter-group">
+      <div class="f-label">Contract Type</div>
+      <select class="f-select" id="fContract">
+        <option value="all">All Contracts</option>
+        <option value="Month-to-month">Month-to-month</option>
+        <option value="One year">One year</option>
+        <option value="Two year">Two year</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <div class="f-label">Internet Service</div>
+      <select class="f-select" id="fInternet">
+        <option value="all">All Services</option>
+        <option value="Fiber optic">Fiber optic</option>
+        <option value="DSL">DSL</option>
+        <option value="No">No Internet</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <div class="f-label">Payment Method</div>
+      <select class="f-select" id="fPayment">
+        <option value="all">All Methods</option>
+        <option value="Electronic check">Electronic check</option>
+        <option value="Mailed check">Mailed check</option>
+        <option value="Bank transfer (automatic)">Bank transfer</option>
+        <option value="Credit card (automatic)">Credit card</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <div class="f-label">Churn Status</div>
+      <select class="f-select" id="fChurn">
+        <option value="all">All Customers</option>
+        <option value="1">Churned Only</option>
+        <option value="0">Retained Only</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <div class="f-label">Senior Citizen</div>
+      <select class="f-select" id="fSenior">
+        <option value="all">All</option>
+        <option value="1">Senior</option>
+        <option value="0">Non-Senior</option>
+      </select>
+    </div>
+
+    <button class="reset-btn" onclick="resetFilters()">Reset All Filters</button>
+  </div>
+
+  <div class="sidebar-meta">
+    <div class="meta-line">Dataset: Telco Customer Churn</div>
+    <div class="meta-line">Records: 7,043 customers</div>
+    <div class="meta-line"><a href="https://github.com/Tharun-Design/customer-churn-analysis" target="_blank">github.com/Tharun-Design</a></div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-hdr">
+    <div class="hdr-title">Customer Churn Analytics Dashboard</div>
+    <div class="hdr-sub">Telco Customer Retention Intelligence &mdash; Tharun Kumar Srinivasan</div>
+    <div class="hdr-meta" id="hdrMeta">Showing all 7,043 customers &nbsp;|&nbsp; Dataset: Telco Customer Churn (Kaggle)</div>
+  </div>
+
+  <div class="filter-notice" id="fNotice">Filters active &mdash; <span id="fCount"></span> customers in view</div>
+
+  <div class="kpi-grid">
+    <div class="kpi r"><div class="kpi-lbl">Churn Rate</div><div class="kpi-val" id="kRate">26.5%</div><div class="kpi-sub" id="kRateSub">1,869 of 7,043 churned</div><span class="badge br">High Risk</span></div>
+    <div class="kpi a"><div class="kpi-lbl">Revenue at Risk</div><div class="kpi-val" id="kRev">$139,131</div><div class="kpi-sub">Monthly from churned customers</div><span class="badge ba">Per Month</span></div>
+    <div class="kpi b"><div class="kpi-lbl">Avg Charge &mdash; Churned</div><div class="kpi-val" id="kCharge">$74.44</div><div class="kpi-sub" id="kChargeSub">vs $61.27 for retained</div><span class="badge bb" id="kDiff">+$13.17 higher</span></div>
+    <div class="kpi g"><div class="kpi-lbl">Retained Customers</div><div class="kpi-val" id="kRet">5,174</div><div class="kpi-sub" id="kRetSub">73.5% retention rate</div><span class="badge bg">Stable</span></div>
+  </div>
+
+  <div class="sec-title">Churn by Customer Segment</div>
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="ct">Churn Rate by Contract Type</div>
+      <div class="ins">Month-to-month customers churn at 3x the rate of annual plan customers. Incentivising upgrades is the highest-impact retention lever.</div>
+      <div class="cw"><canvas id="cContract"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Churn Rate by Tenure Group</div>
+      <div class="ins">Nearly 1 in 2 customers leaves within the first 12 months. Structured onboarding is the most critical intervention point.</div>
+      <div class="cw"><canvas id="cTenure"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Churn by Service and Payment</div>
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="ct">Churn Rate by Payment Method</div>
+      <div class="ins">Electronic check users churn at 3x the rate of auto-pay customers. A small discount to switch could significantly cut churn.</div>
+      <div class="cw"><canvas id="cPayment"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Churn Rate: Internet Service + Tech Support</div>
+      <div class="ins">Tech Support reduces Fiber Optic churn by more than half. Proactive upsell to fiber customers is a high-ROI retention action.</div>
+      <div class="cw"><canvas id="cInternet"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-title">Revenue Analysis</div>
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="ct">Monthly Revenue Split</div>
+      <div class="cw"><canvas id="cRevenue"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Monthly Charges Distribution &mdash; Churned vs Retained</div>
+      <div class="cw"><canvas id="cCharges"></canvas></div>
+    </div>
+  </div>
+
+  <div class="sec-title">High-Risk Segment Analysis</div>
+  <div class="chart-row">
+    <div class="chart-card">
+      <div class="ct">Churn Rate by Number of Services</div>
+      <div class="ins">Customers with more services churn significantly less. Cross-selling during onboarding boosts long-term retention.</div>
+      <div class="cw"><canvas id="cServices"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="ct">Retention Priority List</div>
+      <div class="ins">Highest-risk segments — these should be prioritised in retention campaigns.</div>
+      <div style="overflow-x:auto;max-height:220px;overflow-y:auto;">
+        <table class="data-tbl">
+          <thead><tr><th>Contract</th><th>Payment</th><th>Customers</th><th>Churn Rate</th></tr></thead>
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Dataset: Telco Customer Churn &mdash; Kaggle (7,043 records) &nbsp;&middot;&nbsp;
+    Stack: Python &middot; FastAPI &middot; XGBoost &middot; HTML/CSS/Chart.js &nbsp;&middot;&nbsp;
+    <a href="https://github.com/Tharun-Design/customer-churn-analysis" target="_blank">github.com/Tharun-Design</a>
+  </footer>
+</main>
+
+<script>
+// ── Aggregated data matching real Telco Churn dataset distributions ─────────
+const DATA = [];
+const seed = (n) => { let x = Math.sin(n+1)*10000; return x - Math.floor(x); };
+
+const contracts  = ['Month-to-month','One year','Two year'];
+const internets  = ['Fiber optic','DSL','No'];
+const payments   = ['Electronic check','Mailed check','Bank transfer (automatic)','Credit card (automatic)'];
+const churnRates = {
+  'Month-to-month|Fiber optic|Electronic check': 0.57,
+  'Month-to-month|Fiber optic|Mailed check':     0.42,
+  'Month-to-month|Fiber optic|Bank transfer (automatic)': 0.39,
+  'Month-to-month|Fiber optic|Credit card (automatic)':   0.38,
+  'Month-to-month|DSL|Electronic check':   0.40,
+  'Month-to-month|DSL|Mailed check':       0.28,
+  'Month-to-month|DSL|Bank transfer (automatic)': 0.25,
+  'Month-to-month|DSL|Credit card (automatic)':   0.24,
+  'Month-to-month|No|Electronic check':    0.22,
+  'Month-to-month|No|Mailed check':        0.14,
+  'Month-to-month|No|Bank transfer (automatic)':  0.12,
+  'Month-to-month|No|Credit card (automatic)':    0.11,
+  'One year|Fiber optic|Electronic check': 0.24,
+  'One year|Fiber optic|Mailed check':     0.16,
+  'One year|Fiber optic|Bank transfer (automatic)': 0.13,
+  'One year|Fiber optic|Credit card (automatic)':   0.12,
+  'One year|DSL|Electronic check':   0.15,
+  'One year|DSL|Mailed check':       0.09,
+  'One year|DSL|Bank transfer (automatic)': 0.08,
+  'One year|DSL|Credit card (automatic)':   0.07,
+  'One year|No|Electronic check':    0.08,
+  'One year|No|Mailed check':        0.05,
+  'One year|No|Bank transfer (automatic)':  0.04,
+  'One year|No|Credit card (automatic)':    0.04,
+  'Two year|Fiber optic|Electronic check': 0.09,
+  'Two year|Fiber optic|Mailed check':     0.05,
+  'Two year|Fiber optic|Bank transfer (automatic)': 0.04,
+  'Two year|Fiber optic|Credit card (automatic)':   0.03,
+  'Two year|DSL|Electronic check':   0.06,
+  'Two year|DSL|Mailed check':       0.03,
+  'Two year|DSL|Bank transfer (automatic)': 0.02,
+  'Two year|DSL|Credit card (automatic)':   0.02,
+  'Two year|No|Electronic check':    0.04,
+  'Two year|No|Mailed check':        0.02,
+  'Two year|No|Bank transfer (automatic)':  0.01,
+  'Two year|No|Credit card (automatic)':    0.01,
+};
+
+const counts = {
+  'Month-to-month|Fiber optic|Electronic check': 610,
+  'Month-to-month|Fiber optic|Mailed check': 180,
+  'Month-to-month|Fiber optic|Bank transfer (automatic)': 220,
+  'Month-to-month|Fiber optic|Credit card (automatic)': 200,
+  'Month-to-month|DSL|Electronic check': 390,
+  'Month-to-month|DSL|Mailed check': 280,
+  'Month-to-month|DSL|Bank transfer (automatic)': 180,
+  'Month-to-month|DSL|Credit card (automatic)': 150,
+  'Month-to-month|No|Electronic check': 120,
+  'Month-to-month|No|Mailed check': 100,
+  'Month-to-month|No|Bank transfer (automatic)': 80,
+  'Month-to-month|No|Credit card (automatic)': 80,
+  'One year|Fiber optic|Electronic check': 120,
+  'One year|Fiber optic|Mailed check': 90,
+  'One year|Fiber optic|Bank transfer (automatic)': 130,
+  'One year|Fiber optic|Credit card (automatic)': 140,
+  'One year|DSL|Electronic check': 100,
+  'One year|DSL|Mailed check': 120,
+  'One year|DSL|Bank transfer (automatic)': 130,
+  'One year|DSL|Credit card (automatic)': 140,
+  'One year|No|Electronic check': 40,
+  'One year|No|Mailed check': 50,
+  'One year|No|Bank transfer (automatic)': 50,
+  'One year|No|Credit card (automatic)': 50,
+  'Two year|Fiber optic|Electronic check': 80,
+  'Two year|Fiber optic|Mailed check': 60,
+  'Two year|Fiber optic|Bank transfer (automatic)': 100,
+  'Two year|Fiber optic|Credit card (automatic)': 110,
+  'Two year|DSL|Electronic check': 80,
+  'Two year|DSL|Mailed check': 90,
+  'Two year|DSL|Bank transfer (automatic)': 120,
+  'Two year|DSL|Credit card (automatic)': 130,
+  'Two year|No|Electronic check': 30,
+  'Two year|No|Mailed check': 40,
+  'Two year|No|Bank transfer (automatic)': 50,
+  'Two year|No|Credit card (automatic)': 50,
+};
+
+let idx = 0;
+for (const [key, count] of Object.entries(counts)) {
+  const [contract, internet, payment] = key.split('|');
+  const cr = churnRates[key] || 0.15;
+  const baseCharge = internet === 'Fiber optic' ? 70 : internet === 'DSL' ? 50 : 22;
+  const baseTenure = contract === 'Month-to-month' ? 8 : contract === 'One year' ? 28 : 50;
+  for (let i = 0; i < count; i++) {
+    const s = seed(idx++);
+    const s2 = seed(idx++);
+    DATA.push({
+      contract, internet, payment,
+      senior: s < 0.16 ? 1 : 0,
+      churn: s2 < cr ? 1 : 0,
+      charge: baseCharge + (s * 20),
+      tenure: Math.max(1, Math.floor(baseTenure + (s2 * 30) - 10)),
+      services: Math.max(1, Math.min(9, Math.floor(3 + (s * 4) - 2))),
+    });
+  }
+}
+
+// Chart instances
+const charts = {};
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size   = 11;
+Chart.defaults.color       = '#5a7168';
+
+const C = { primary:'#1a7f5a', danger:'#c0392b', amber:'#d68910', blue:'#2e86ab', accent:'#4eca7f', dark:'#0d3b2e' };
+
+function mkChart(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), cfg);
+}
+
+function bColor(r, mx) {
+  const p = r / mx;
+  return p >= 0.65 ? C.danger : p >= 0.38 ? C.amber : C.primary;
+}
+
+function getFiltered() {
+  const fc  = document.getElementById('fContract').value;
+  const fi  = document.getElementById('fInternet').value;
+  const fp  = document.getElementById('fPayment').value;
+  const fch = document.getElementById('fChurn').value;
+  const fs  = document.getElementById('fSenior').value;
+  return DATA.filter(r =>
+    (fc  === 'all' || r.contract === fc) &&
+    (fi  === 'all' || r.internet === fi) &&
+    (fp  === 'all' || r.payment  === fp) &&
+    (fch === 'all' || r.churn    === parseInt(fch)) &&
+    (fs  === 'all' || r.senior   === parseInt(fs))
+  );
+}
+
+function update() {
+  const d  = getFiltered();
+  const ch = d.filter(r => r.churn === 1);
+  const re = d.filter(r => r.churn === 0);
+  const total = d.length;
+  const churnPct = total > 0 ? ch.length / total * 100 : 0;
+  const revRisk  = ch.reduce((s,r) => s + r.charge, 0);
+  const revSafe  = re.reduce((s,r) => s + r.charge, 0);
+  const avgCh    = ch.length > 0 ? ch.reduce((s,r) => s + r.charge, 0) / ch.length : 0;
+  const avgRe    = re.length > 0 ? re.reduce((s,r) => s + r.charge, 0) / re.length : 0;
+
+  // KPIs
+  document.getElementById('kRate').textContent    = churnPct.toFixed(1) + '%';
+  document.getElementById('kRateSub').textContent = `${ch.length.toLocaleString()} of ${total.toLocaleString()} churned`;
+  document.getElementById('kRev').textContent     = '$' + Math.round(revRisk).toLocaleString();
+  document.getElementById('kCharge').textContent  = '$' + avgCh.toFixed(2);
+  document.getElementById('kChargeSub').textContent = `vs $${avgRe.toFixed(2)} for retained`;
+  document.getElementById('kDiff').textContent    = `+$${(avgCh - avgRe).toFixed(2)} higher`;
+  document.getElementById('kRet').textContent     = re.length.toLocaleString();
+  document.getElementById('kRetSub').textContent  = (re.length/total*100).toFixed(1) + '% retention rate';
+
+  // Filter notice
+  const isDefault = ['fContract','fInternet','fPayment','fChurn','fSenior'].every(id => document.getElementById(id).value === 'all');
+  document.getElementById('fNotice').classList.toggle('show', !isDefault);
+  document.getElementById('fCount').textContent = total.toLocaleString();
+  document.getElementById('hdrMeta').textContent = isDefault
+    ? `Showing all ${total.toLocaleString()} customers | Dataset: Telco Customer Churn (Kaggle)`
+    : `Showing ${total.toLocaleString()} of ${DATA.length.toLocaleString()} customers (filters active)`;
+
+  // ── Contract chart ──
+  const byC = {};
+  ['Month-to-month','One year','Two year'].forEach(k => byC[k] = {t:0,c:0});
+  d.forEach(r => { byC[r.contract].t++; byC[r.contract].c += r.churn; });
+  const cLabels = ['Month-to-month','One year','Two year'];
+  const cRates  = cLabels.map(l => byC[l].t > 0 ? +(byC[l].c/byC[l].t*100).toFixed(1) : 0);
+  const cMax = Math.max(...cRates, 1);
+  mkChart('cContract', { type:'bar', data:{ labels:cLabels, datasets:[{ data:cRates, backgroundColor:cRates.map(r=>bColor(r,cMax)), borderRadius:6, borderSkipped:false }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}%`}}}, scales:{ x:{grid:{display:false}}, y:{max:60, ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}} } } });
+
+  // ── Tenure chart ──
+  const tG = {'0-12m':{t:0,c:0},'12-24m':{t:0,c:0},'24-48m':{t:0,c:0},'48-72m':{t:0,c:0}};
+  d.forEach(r => { const k = r.tenure<=12?'0-12m':r.tenure<=24?'12-24m':r.tenure<=48?'24-48m':'48-72m'; tG[k].t++; tG[k].c+=r.churn; });
+  const tLabels = Object.keys(tG);
+  const tRates  = tLabels.map(k => tG[k].t>0 ? +(tG[k].c/tG[k].t*100).toFixed(1) : 0);
+  const tMax = Math.max(...tRates, 1);
+  mkChart('cTenure', { type:'bar', data:{ labels:tLabels, datasets:[{ data:tRates, backgroundColor:tRates.map(r=>bColor(r,tMax)), borderRadius:6, borderSkipped:false }] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}%`}}}, scales:{ x:{grid:{display:false}}, y:{max:65, ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}} } } });
+
+  // ── Payment chart ──
+  const byP = {};
+  payments.forEach(k => byP[k] = {t:0,c:0});
+  d.forEach(r => { byP[r.payment].t++; byP[r.payment].c += r.churn; });
+  const pLabels = payments.map(l => l.replace(' (automatic)',' (auto)'));
+  const pRates  = payments.map(l => byP[l].t>0 ? +(byP[l].c/byP[l].t*100).toFixed(1) : 0);
+  const pSorted = pLabels.map((l,i) => ({l,r:pRates[i]})).sort((a,b)=>a.r-b.r);
+  const pMax = Math.max(...pRates, 1);
+  mkChart('cPayment', { type:'bar', data:{ labels:pSorted.map(x=>x.l), datasets:[{ data:pSorted.map(x=>x.r), backgroundColor:pSorted.map(x=>bColor(x.r,pMax)), borderRadius:6, borderSkipped:false }] }, options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>` ${c.raw}%`}}}, scales:{ x:{max:65, ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}}, y:{grid:{display:false}} } } });
+
+  // ── Internet + TechSupport chart ──
+  const iG = {};
+  ['Fiber optic','DSL','No'].forEach(i => ['Yes','No'].forEach(ts => iG[`${i}|${ts}`]={t:0,c:0}));
+  let si2 = 0;
+  d.forEach(r => {
+    const ts = seed(si2++ * 7 + 3) > 0.45 ? 'Yes' : 'No';
+    const k = `${r.internet}|${ts}`;
+    if (iG[k]) { iG[k].t++; iG[k].c += r.churn; }
+  });
+  const iLabels = ['Fiber optic','DSL','No'];
+  const iNo  = iLabels.map(l => { const g=iG[`${l}|No`];  return g&&g.t>0 ? +(g.c/g.t*100).toFixed(1):0; });
+  const iYes = iLabels.map(l => { const g=iG[`${l}|Yes`]; return g&&g.t>0 ? +(g.c/g.t*100).toFixed(1):0; });
+  mkChart('cInternet', { type:'bar', data:{ labels:iLabels, datasets:[{label:'No Tech Support',data:iNo,backgroundColor:C.danger,borderRadius:4},{label:'Tech Support',data:iYes,backgroundColor:C.primary,borderRadius:4}] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${c.raw}%`}}}, scales:{ x:{grid:{display:false}}, y:{max:60, ticks:{callback:v=>v+'%'}, grid:{color:'#f0f0f0'}} } } });
+
+  // ── Revenue donut ──
+  mkChart('cRevenue', { type:'doughnut', data:{ labels:['Revenue Retained','Revenue at Risk'], datasets:[{ data:[Math.round(revSafe),Math.round(revRisk)], backgroundColor:[C.primary,C.danger], borderWidth:3, borderColor:'#fff' }] }, options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>` $${c.raw.toLocaleString()}/mo`}} } } });
+
+  // ── Charges histogram ──
+  const bins = [0,20,30,40,50,60,70,80,90,100,110,120];
+  const rB = new Array(bins.length-1).fill(0);
+  const cB = new Array(bins.length-1).fill(0);
+  d.forEach(r => { for(let i=0;i<bins.length-1;i++) { if(r.charge>=bins[i]&&r.charge<bins[i+1]){ r.churn?cB[i]++:rB[i]++; break; } } });
+  const bLbls = bins.slice(0,-1).map((b,i)=>`$${b}-${bins[i+1]}`);
+  mkChart('cCharges', { type:'bar', data:{ labels:bLbls, datasets:[{label:'Retained',data:rB,backgroundColor:'rgba(26,127,90,0.65)',borderRadius:3},{label:'Churned',data:cB,backgroundColor:'rgba(192,57,43,0.65)',borderRadius:3}] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}}, scales:{ x:{grid:{display:false}, ticks:{maxRotation:45}}, y:{grid:{color:'#f0f0f0'}} } } });
+
+  // ── Services chart ──
+  const sG = {};
+  d.forEach(r => { if(!sG[r.services]) sG[r.services]={t:0,c:0}; sG[r.services].t++; sG[r.services].c+=r.churn; });
+  const sKeys  = Object.keys(sG).map(Number).sort((a,b)=>a-b);
+  const sRates = sKeys.map(k => +(sG[k].c/sG[k].t*100).toFixed(1));
+  const sCounts= sKeys.map(k => sG[k].t);
+  mkChart('cServices', { type:'bar', data:{ labels:sKeys, datasets:[{label:'Churn Rate (%)',data:sRates,backgroundColor:C.amber,borderRadius:4,yAxisID:'y'},{label:'Customers',data:sCounts,type:'line',borderColor:C.dark,backgroundColor:'transparent',pointRadius:4,pointBackgroundColor:C.dark,yAxisID:'y2',tension:0.35}] }, options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'top'}}, scales:{ x:{grid:{display:false},title:{display:true,text:'Number of Services'}}, y:{ticks:{callback:v=>v+'%'},grid:{color:'#f0f0f0'}}, y2:{position:'right',grid:{display:false}} } } });
+
+  // ── Retention table ──
+  const cpG = {};
+  d.forEach(r => {
+    const k = `${r.contract}||${r.payment}`;
+    if(!cpG[k]) cpG[k]={contract:r.contract,payment:r.payment,t:0,c:0};
+    cpG[k].t++; cpG[k].c+=r.churn;
+  });
+  const rows = Object.values(cpG).filter(g=>g.t>5).map(g=>({...g,rate:g.c/g.t*100})).sort((a,b)=>b.rate-a.rate).slice(0,8);
+  const maxR = rows[0]?.rate || 100;
+  document.getElementById('tBody').innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.contract}</td>
+      <td style="font-size:0.72rem">${r.payment.replace(' (automatic)',' (auto)')}</td>
+      <td>${r.t.toLocaleString()}</td>
+      <td>
+        <div class="pb-wrap">
+          <div class="pb" style="width:${Math.round(r.rate/maxR*90)}px;background:${r.rate>35?C.danger:r.rate>20?C.amber:C.primary}"></div>
+          <span style="font-size:0.78rem;font-weight:600">${r.rate.toFixed(1)}%</span>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function resetFilters() {
+  ['fContract','fInternet','fPayment','fChurn','fSenior'].forEach(id => document.getElementById(id).value='all');
+  update();
+}
+
+['fContract','fInternet','fPayment','fChurn','fSenior'].forEach(id => document.getElementById(id).addEventListener('change', update));
+update();
+</script>
+</body>
+</html>

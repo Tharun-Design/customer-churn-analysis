@@ -2,7 +2,8 @@
 
 **Author:** Tharun Kumar Srinivasan  
 **GitHub:** [github.com/Tharun-Design](https://github.com/Tharun-Design)  
-**Live Demo:** [View Dashboard](https://your-streamlit-app.streamlit.app)  
+**Live Dashboard:** [View Dashboard](https://tharun-design.github.io/customer-churn-analysis/dashboard.html)
+**Project Page:** [View Project](https://tharun-design.github.io/customer-churn-analysis/)
 **API Docs:** [View Swagger UI](http://localhost:8000/docs)
 
 ---
