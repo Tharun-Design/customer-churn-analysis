@@ -2,19 +2,30 @@
 
 **Author:** Tharun Kumar Srinivasan  
 **GitHub:** [github.com/Tharun-Design](https://github.com/Tharun-Design)  
-**Live Dashboard:** [View Dashboard](https://tharun-design.github.io/customer-churn-analysis/dashboard.html)
-**Project Page:** [View Project](https://tharun-design.github.io/customer-churn-analysis/)
-**API Docs:** [View Swagger UI](http://localhost:8000/docs)
+**Live Dashboard:** [tharun-design.github.io/customer-churn-analysis/dashboard.html](https://tharun-design.github.io/customer-churn-analysis/dashboard.html)  
+**Project Page:** [tharun-design.github.io/customer-churn-analysis](https://tharun-design.github.io/customer-churn-analysis/)  
+**LinkedIn:** [linkedin.com/in/tharun-kumar-srinivasan](https://linkedin.com/in/tharun-kumar-srinivasan)
 
 ---
 
 ## Overview
 
-An end-to-end data science project that analyses customer churn for a telecom company, builds a machine learning prediction model, and serves predictions through a REST API integrated into an interactive dashboard.
+An end-to-end data science project that analyses customer churn for a telecom company, builds a machine learning prediction model, and serves predictions through a REST API integrated into an interactive web dashboard.
 
-The project covers the complete data science workflow — from raw data exploration to a deployed, production-ready prediction system.
+The project covers the complete data science workflow — from raw data exploration and SQL business queries to a tuned XGBoost model deployed via FastAPI, with a fully interactive dashboard built in HTML, CSS, and JavaScript hosted on GitHub Pages.
 
-**Business Problem:** A telecom company loses ~26.5% of customers every quarter, representing $139,131 in monthly revenue at risk. This project identifies the drivers of churn, predicts which customers are likely to leave, and provides actionable retention recommendations.
+**Business Problem:** A telecom company loses approximately 26.5% of customers every quarter, representing $139,131 in monthly revenue at risk. This project identifies the drivers of churn, predicts which customers are likely to leave, and provides actionable retention recommendations.
+
+---
+
+## Live Links
+
+| Resource | URL |
+|----------|-----|
+| Interactive Dashboard | [View Dashboard](https://tharun-design.github.io/customer-churn-analysis/dashboard.html) |
+| Project Showcase Page | [View Project Page](https://tharun-design.github.io/customer-churn-analysis/) |
+| GitHub Repository | [View Repository](https://github.com/Tharun-Design/customer-churn-analysis) |
+| API (local) | `http://localhost:8000/docs` |
 
 ---
 
@@ -37,13 +48,10 @@ The project covers the complete data science workflow — from raw data explorat
 ```
 customer-churn-analysis/
 |
-|-- app/
-|   |-- streamlit_app.py               Interactive dashboard + ML predictor UI
-|   |-- logo.png                       Brand logo
-|
 |-- api/
 |   |-- main.py                        FastAPI REST API
 |   |-- test_api.py                    API test script
+|   |-- requirements.txt               API-specific dependencies
 |   |-- __init__.py
 |
 |-- notebooks/
@@ -81,7 +89,9 @@ customer-churn-analysis/
 |   |-- shap_feature_importance.csv
 |   |-- best_hyperparameters.csv
 |
-|-- docs/
+|-- docs/                              GitHub Pages — live dashboard and project page
+|   |-- index.html                     Project showcase page
+|   |-- dashboard.html                 Interactive web dashboard (HTML/CSS/JS)
 |   |-- model_comparison.png
 |   |-- roc_curves.png
 |   |-- confusion_matrix.png
@@ -94,11 +104,9 @@ customer-churn-analysis/
 |
 |-- data/
 |   |-- raw/                           Original dataset (not tracked)
-|   |-- cleaned/                       Processed dataset (not tracked)
+|   |-- cleaned/                       Processed dataset
 |
-|-- .streamlit/
-|   |-- config.toml                    Streamlit theme configuration
-|
+|-- render.yaml                        Render deployment config
 |-- requirements.txt
 |-- .gitignore
 |-- README.md
@@ -117,7 +125,8 @@ customer-churn-analysis/
 | Machine Learning | Scikit-learn, XGBoost, LightGBM |
 | Explainability | SHAP |
 | API | FastAPI, Uvicorn, Pydantic |
-| Dashboard | Streamlit |
+| Dashboard | HTML, CSS, JavaScript, Chart.js |
+| Hosting | GitHub Pages |
 | Version Control | Git, GitHub |
 
 ---
@@ -185,34 +194,27 @@ python src/setup_database.py
 
 ---
 
-## Running the Project
+## Dashboard
 
-### Option A — Dashboard only
+The interactive dashboard is built in pure HTML, CSS, and JavaScript using Chart.js. It is hosted on GitHub Pages with no server required.
 
-```bash
-python -m streamlit run app/streamlit_app.py
+**Live URL:**
+```
+https://tharun-design.github.io/customer-churn-analysis/dashboard.html
 ```
 
-Open your browser at `http://localhost:8501`
+**Features:**
+- Sidebar with 5 real-time filters — Contract Type, Internet Service, Payment Method, Churn Status, Senior Citizen
+- 4 KPI cards updating dynamically on filter change
+- 7 interactive charts — Contract, Tenure, Payment, Internet + Tech Support, Revenue donut, Charges distribution, Services dual-axis
+- Retention Priority List table with progress bars
+- Business insight banners below each chart
 
-### Option B — Dashboard with live ML Predictor
+To view locally, simply open `docs/dashboard.html` in any browser. No installation required.
 
-The Churn Predictor tab requires the FastAPI server to be running.
-Open two terminals in the project root:
+---
 
-**Terminal 1 — Start the API:**
-```bash
-python -m uvicorn api.main:app --reload --port 8000
-```
-
-**Terminal 2 — Start the Dashboard:**
-```bash
-python -m streamlit run app/streamlit_app.py
-```
-
-Open `http://localhost:8501` and navigate to the Churn Predictor tab in the sidebar.
-
-### Option C — API only
+## Running the API
 
 ```bash
 python -m uvicorn api.main:app --reload --port 8000
@@ -231,7 +233,7 @@ Interactive API documentation is available at `http://localhost:8000/docs`
 | POST | `/predict` | Single customer churn prediction |
 | POST | `/predict-batch` | Batch prediction for up to 100 customers |
 
-### Sample Request — Single Prediction
+### Sample Request
 
 ```bash
 curl -X POST "http://localhost:8000/predict" \
@@ -301,11 +303,11 @@ curl -X POST "http://localhost:8000/predict" \
 
 **Primary metric: ROC-AUC**
 
-The retention team contacts a fixed number of customers per month. ROC-AUC measures how accurately the model ranks customers by churn risk, which directly determines campaign ROI. A model with high recall but poor ranking is less useful for targeted campaigns than one with a high AUC.
+The retention team contacts a fixed number of customers per month. ROC-AUC measures how accurately the model ranks customers by churn risk, which directly determines campaign ROI.
 
 **Winner: XGBoost (Tuned)**
 - Highest ROC-AUC after hyperparameter tuning: 84.47%
-- Recall of 84.76% — the model catches 85 out of every 100 churners before they leave
+- Recall of 84.76% — catches 85 out of every 100 churners before they leave
 - Tuning method: RandomizedSearchCV, 30 iterations, 5-fold StratifiedKFold
 - Cross-validation stability: 84.76% +/- 1.21% across folds
 
@@ -314,15 +316,15 @@ The retention team contacts a fixed number of customers per month. ROC-AUC measu
 1. Tenure — shorter tenure correlates strongly with higher churn risk
 2. Contract type — month-to-month customers are at the highest risk
 3. Monthly charges — higher charges increase churn likelihood
-4. Internet service type — Fiber optic without Tech Support is the highest-risk combination
+4. Internet service — Fiber optic without Tech Support is the highest-risk combination
 5. Payment method — electronic check users churn at nearly 3x the rate of auto-pay customers
 
 ---
 
 ## Key Business Findings
 
-| Segment | Churn Rate | Priority Recommendation |
-|---------|------------|------------------------|
+| Segment | Churn Rate | Recommendation |
+|---------|------------|----------------|
 | Month-to-month contracts | 42.7% | Offer incentives to upgrade to annual plans |
 | Customers in first 12 months | 47.4% | Implement structured onboarding programme |
 | Fiber optic without Tech Support | 41.0% | Proactive Tech Support upsell campaign |
@@ -339,10 +341,29 @@ Ensure the API is running first, then in a second terminal:
 python api/test_api.py
 ```
 
-This runs 5 automated tests: health check, model info endpoint, high-risk customer prediction, low-risk customer prediction, and batch prediction with a 2-customer payload.
+This runs 5 automated tests: health check, model info endpoint, high-risk customer prediction, low-risk customer prediction, and batch prediction.
 
 ---
 
+## Project Roadmap
+
+- [x] Week 1 — Data cleaning and exploratory data analysis
+- [x] Week 2 — SQL analysis (10 business queries)
+- [x] Week 3 — Interactive web dashboard (HTML/CSS/Chart.js)
+- [x] Week 4 — GitHub Pages deployment
+- [x] Week 5 — ML model comparison (5 models + SHAP explainability)
+- [x] Week 6 — Hyperparameter tuning and cross validation
+- [x] Week 7 — FastAPI REST API with Swagger documentation
+- [x] Week 8 — Complete project with live GitHub Pages dashboard
+
+
+---
+
+## License
+
+This project is licensed under the MIT License.
+
+---
 
 ## Contact
 
