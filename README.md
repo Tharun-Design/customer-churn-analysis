@@ -43,6 +43,94 @@ The project covers the complete data science workflow — from raw data explorat
 
 ---
 
+## Project Architecture
+
+```
+RAW DATA (Kaggle CSV — 7,043 customers)
+         |
+         v
++---------------------------+
+|   src/data_cleaning.py    |   Cleaning pipeline — fix types, encode,
+|   src/setup_database.py   |   feature engineer, load into SQLite DB
++---------------------------+
+         |
+         v
++---------------------------+        +----------------------------+
+|   notebooks/01_EDA.ipynb  |        | queries/ (10 SQL files)    |
+|   10-section EDA          |        | Business questions on      |
+|   Seaborn + Plotly charts |        | churn, revenue, segments   |
++---------------------------+        +----------------------------+
+         |                                      |
+         +------------------+-------------------+
+                            |
+                            v
+             +-----------------------------+
+             | notebooks/                  |
+             | 03_ML_Model_Comparison.ipynb|   5 models trained + SHAP
+             | 04_Hyperparameter_Tuning    |   RandomizedSearchCV tuning
+             +-----------------------------+
+                            |
+               +------------+------------+
+               |                         |
+               v                         v
+  +------------------------+   +----------------------+
+  |  models/               |   |  reports/            |
+  |  final_xgboost_tuned   |   |  model_comparison    |
+  |  imputer.pkl           |   |  shap_importance     |
+  |  feature_names.pkl     |   |  best_hyperparams    |
+  +------------------------+   +----------------------+
+               |
+               v
+  +---------------------------+
+  |   api/main.py (FastAPI)   |   POST /predict
+  |   Input via Pydantic      |   Returns probability + risk level
+  |   XGBoost model served    |   Swagger docs at /docs
+  +---------------------------+
+               |
+               v
+  +---------------------------+
+  |   docs/dashboard.html     |   HTML / CSS / Chart.js
+  |   7 interactive charts    |   5 sidebar filters (real-time)
+  |   4 KPI cards             |   Hosted free on GitHub Pages
+  +---------------------------+
+               |
+               v
+  +---------------------------+
+  |   docs/index.html         |   Project showcase page
+  |   GitHub Pages            |   tharun-design.github.io/...
+  +---------------------------+
+```
+
+### Data Flow
+
+```
+CSV --> Clean --> SQLite DB --> EDA + SQL Analysis
+                     |
+                     v
+             Feature Matrix (X, y)
+                     |
+                     v
+           Train 5 ML Models
+           LR | RF | XGB | LGBM | SVM
+                     |
+                     v
+         Hyperparameter Tuning
+         RandomizedSearchCV (30 iter, 5-fold CV)
+                     |
+                     v
+        Best Model: XGBoost (ROC-AUC 84.47%)
+                     |
+              +------+------+
+              |             |
+              v             v
+          Save .pkl     FastAPI /predict
+              |             |
+              v             v
+        Web Dashboard (GitHub Pages)
+```
+
+---
+
 ## Project Structure
 
 ```
